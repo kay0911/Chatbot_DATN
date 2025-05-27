@@ -1,0 +1,32 @@
+# FastAPI và Server
+fastapi
+uvicorn[standard]
+
+# Langchain + LLM + Embedding
+langchain
+langchain-community
+langchain-openai
+langchain-together
+langchain-huggingface
+sentence-transformers
+transformers
+huggingface-hub
+faiss-cpu
+chromadb
+
+# MongoDB
+pymongo
+dnspython  # để kết nối với MongoDB Atlas có SSL
+
+# Web Interface
+streamlit
+requests
+httpx
+
+# Khác
+python-dotenv
+tiktoken
+pydantic
+nltk
+accelerate
+PyPDF2
