@@ -20,5 +20,5 @@ COPY data/ data/
 EXPOSE 8000
 
 # Lệnh mặc định khi container chạy
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
 
