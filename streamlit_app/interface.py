@@ -5,6 +5,8 @@ import requests
 
 st.set_page_config(page_title="Chatbot Shop", layout="wide")
 
+link_api = "https://chatbot-datn-e070.onrender.com"
+
 tab1, tab2, tab3 = st.tabs(["💬 Chat thử với Chatbot", "📨 Hộp thư Facebook", "📄 Quản lý dữ liệu huấn luyện"])
 
 # ========================== TAB 1 ==========================
@@ -31,7 +33,7 @@ with tab1:
         st.session_state.chat_history.append(("user", user_input))
         with st.spinner("Đang trả lời..."):
             try:
-                res = requests.post("http://localhost:8000/chat", json={"message": user_input})
+                res = requests.post(link_api + "/chat", json={"message": user_input})
                 reply = res.json().get("reply", "Không có phản hồi.")
             except Exception as e:
                 reply = f"Lỗi: {e}"
@@ -54,7 +56,7 @@ with tab2:
     # Gọi API chỉ khi cần
     if st.session_state.fb_reload:
         try:
-            res = requests.get("http://localhost:8000/fb/messages")
+            res = requests.get(link_api + "/fb/messages")
             st.session_state.fb_messages = res.json()
             st.session_state.fb_reload = False
         except Exception as e:
@@ -96,7 +98,7 @@ with tab2:
                 reply = st.text_input("Nhập phản hồi", key=f"reply_{sender_id}")
                 if st.button("Gửi", key=f"btn_{sender_id}"):
                     try:
-                        send = requests.post("http://localhost:8000/fb/reply", json={
+                        send = requests.post(link_api + "/fb/reply", json={
                             "sender_id": sender_id,
                             "message": reply
                         })
@@ -125,7 +127,7 @@ with tab3:
     sample_content = ""
     if st.session_state.sample_updated:
         try:
-            res = requests.get("http://localhost:8000/api/files/sample")
+            res = requests.get(link_api + "/api/files/sample")
             sample_content = res.json().get("content", "")
         except:
             sample_content = ""
@@ -133,7 +135,7 @@ with tab3:
 
     edited_sample = st.text_area("Chỉnh sửa sample.txt", value=sample_content, height=200)
     if st.button("💾 Lưu sample.txt"):
-        res = requests.post("http://localhost:8000/api/files/sample", params={"content": edited_sample})
+        res = requests.post(link_api + "/api/files/sample", params={"content": edited_sample})
         if res.status_code == 200:
             st.success("✅ Đã lưu sample.txt")
             st.session_state.sample_updated = True
@@ -146,7 +148,7 @@ with tab3:
 
     if uploaded_file and not st.session_state.uploaded_once:
         files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-        res = requests.post("http://localhost:8000/api/files/upload", files=files)
+        res = requests.post(link_api + "/api/files/upload", files=files)
         if res.status_code == 200:
             st.success(f"✅ {uploaded_file.name} đã được tải lên.")
             st.session_state.need_reload_files = True
@@ -156,7 +158,7 @@ with tab3:
     # ====== LẤY DANH SÁCH FILE KHI CẦN =======
     if st.session_state.need_reload_files:
         try:
-            res = requests.get("http://localhost:8000/api/files/list")
+            res = requests.get(link_api + "/api/files/list")
             st.session_state.file_list = res.json().get("files", [])
         except:
             st.session_state.file_list = []
@@ -167,7 +169,7 @@ with tab3:
         col1, col2 = st.columns([4, 1])
         col1.markdown(f"- {file}")
         if col2.button("❌ Xoá", key=f"del_{file}"):
-            res = requests.delete(f"http://localhost:8000/api/files/delete/{file}")
+            res = requests.delete(link_api + f"/api/files/delete/{file}")
             if res.status_code == 200:
                 st.success(f"Đã xoá {file}")
                 st.session_state.need_reload_files = True
@@ -175,7 +177,7 @@ with tab3:
 
     # ====== CẬP NHẬT RETRIEVER =======
     if st.button("🔄 Cập nhật retriever"):
-        res = requests.post("http://localhost:8000/api/files/update_retriever")
+        res = requests.post(link_api + "/api/files/update_retriever")
         if res.status_code == 200:
             st.success("✅ Đã cập nhật FAISS retriever!")
         else:
