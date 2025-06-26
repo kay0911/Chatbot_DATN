@@ -21,5 +21,5 @@ COPY run.py .
 EXPOSE 8000
 
 # Lệnh mặc định khi container chạy
-CMD ["python", "run.py"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4"]
 
