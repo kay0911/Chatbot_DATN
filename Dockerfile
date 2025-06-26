@@ -15,7 +15,6 @@ RUN pip install --upgrade pip \
 # Copy thư mục và file chính
 COPY app/ app/
 COPY data/ data/
-COPY run.py .
 
 # Expose cổng
 EXPOSE 8000
