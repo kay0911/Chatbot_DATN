@@ -42,15 +42,27 @@ with tab1:
 with tab2:
     st.markdown("<h2 style='text-align: center;'>📨 Tin nhắn Facebook</h2>", unsafe_allow_html=True)
 
-    try:
-        res = requests.get("http://localhost:8000/fb/messages")
-        messages = res.json()
-    except Exception as e:
-        st.error(f"Lỗi khi lấy tin nhắn: {e}")
-        messages = []
+    # Khởi tạo session_state nếu chưa có
+    if "fb_messages" not in st.session_state:
+        st.session_state.fb_messages = []
+        st.session_state.fb_reload = True
+
+    # Nút làm mới hộp thư
+    if st.button("🔄 Làm mới hộp thư"):
+        st.session_state.fb_reload = True
+
+    # Gọi API chỉ khi cần
+    if st.session_state.fb_reload:
+        try:
+            res = requests.get("http://localhost:8000/fb/messages")
+            st.session_state.fb_messages = res.json()
+            st.session_state.fb_reload = False
+        except Exception as e:
+            st.error(f"Lỗi khi lấy tin nhắn: {e}")
+            st.session_state.fb_messages = []
 
     grouped = defaultdict(list)
-    for msg in messages:
+    for msg in st.session_state.fb_messages:
         grouped[msg["sender_id"]].append(msg)
 
     if not grouped:
@@ -59,34 +71,27 @@ with tab2:
         for sender_id, chat_list in grouped.items():
             with st.expander(f"💬 Đoạn chat với: {sender_id}", expanded=True):
                 for item in sorted(chat_list, key=lambda x: x["timestamp"]):
-                    is_user = item.get("from_user", True)
-                    align = "flex-start"
-                    bgcolor = "#d0ebff"
-                    align_rep ="flex-end"
-                    bgcolor_rep ="#f1f0f0"
-                    
                     time_str = datetime.fromtimestamp(item["timestamp"] / 1000).strftime("%d-%m-%Y %H:%M")
 
-                    bubble = f"""
-                    <div style="display: flex; justify-content: {align}; margin: 5px;">
-                        <div style="background-color: {bgcolor}; padding: 10px; border-radius: 10px; max-width: 65%;">
-                            <div>{item['message']}</div>
-                            <div style="font-size: 10px; text-align: right; color: gray;">{time_str}</div>
+                    if item["message"]:
+                        st.markdown(f"""
+                        <div style="display: flex; justify-content: flex-start; margin: 5px;">
+                            <div style="background-color: #d0ebff; padding: 10px; border-radius: 10px; max-width: 65%;">
+                                <div>{item['message']}</div>
+                                <div style="font-size: 10px; text-align: right; color: gray;">{time_str}</div>
+                            </div>
                         </div>
-                    </div>
-                    """
-                    bubble_rep = f"""
-                    <div style="display: flex; justify-content: {align_rep}; margin: 5px;">
-                        <div style="background-color: {bgcolor_rep}; padding: 10px; border-radius: 10px; max-width: 65%;">
-                            <div>{item['reply']}</div>
-                            <div style="font-size: 10px; text-align: right; color: gray;">{time_str}</div>
+                        """, unsafe_allow_html=True)
+
+                    if item["reply"]:
+                        st.markdown(f"""
+                        <div style="display: flex; justify-content: flex-end; margin: 5px;">
+                            <div style="background-color: #f1f0f0; padding: 10px; border-radius: 10px; max-width: 65%;">
+                                <div>{item['reply']}</div>
+                                <div style="font-size: 10px; text-align: right; color: gray;">{time_str}</div>
+                            </div>
                         </div>
-                    </div>
-                    """
-                    if item['message'] != '': 
-                        st.markdown(bubble, unsafe_allow_html=True)
-                    if item['reply'] != '': 
-                        st.markdown(bubble_rep, unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
 
                 reply = st.text_input("Nhập phản hồi", key=f"reply_{sender_id}")
                 if st.button("Gửi", key=f"btn_{sender_id}"):
@@ -97,69 +102,84 @@ with tab2:
                         })
                         if send.status_code == 200:
                             st.success("Đã gửi phản hồi!")
+                            st.session_state.fb_reload = True  # để reload lại dữ liệu mới
+                            st.rerun()
                         else:
                             st.error("Gửi phản hồi thất bại.")
                     except Exception as e:
                         st.error(f"Lỗi khi gửi: {e}")
 
-from PyPDF2 import PdfReader
-
+# ========================== TAB 2 ==========================
 with tab3:
-    st.markdown("<h2 style='text-align: center;'>📂 Quản lý dữ liệu văn bản</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;'>📂 Quản lý dữ liệu nội bộ</h2>", unsafe_allow_html=True)
 
-    st.subheader("📝 Nội dung tệp mẫu (sample.txt)")
-    try:
-        with open("data/knowledge_base/sample.txt", "r", encoding="utf-8") as f:
-            sample_content = f.read()
-    except:
-        sample_content = ""
+    # ====== KHỞI TẠO session_state =======
+    if "sample_updated" not in st.session_state:
+        st.session_state.sample_updated = True  # cho phép lấy dữ liệu lần đầu
 
-    edited_sample = st.text_area("Chỉnh sửa nội dung sample.txt", value=sample_content, height=200)
-    if st.button("💾 Lưu nội dung"):
-        with open("data/knowledge_base/sample.txt", "w", encoding="utf-8") as f:
-            f.write(edited_sample)
-        st.success("Đã lưu nội dung thành công!")
+    if "file_list" not in st.session_state:
+        st.session_state.file_list = []
+        st.session_state.need_reload_files = True
 
-    st.subheader("📤 Tải lên tệp mới (TXT hoặc PDF)")
-    uploaded_file = st.file_uploader("Chọn tệp TXT hoặc PDF", type=["txt", "pdf"])
-
-    if uploaded_file is not None:
-        save_path = "data/knowledge_base/uploaded_content.txt"
-
-        if uploaded_file.type == "application/pdf":
-            from PyPDF2 import PdfReader
-            reader = PdfReader(uploaded_file)
-            text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-
-        elif uploaded_file.type == "text/plain":
-            # đọc thẳng file txt
-            text = uploaded_file.read().decode("utf-8")
-
-        else:
-            text = ""
-            st.error("❌ Định dạng file không hợp lệ. Vui lòng tải lên file TXT hoặc PDF.")
-
-        if text:
-            with open(save_path, "w", encoding="utf-8") as f:
-                f.write(text)
-            st.success("✅ Đã tải và lưu nội dung tệp!")
+    # ====== CHỈ LẤY sample.txt KHI CẦN =======
+    sample_content = ""
+    if st.session_state.sample_updated:
         try:
-            with open(save_path, "r", encoding="utf-8") as f:
-                uploaded_content = f.read()
+            res = requests.get("http://localhost:8000/api/files/sample")
+            sample_content = res.json().get("content", "")
         except:
-            uploaded_content = ""
-        edited_sample = st.text_area("Chỉnh sửa nội dung uploaded_content.txt", value=uploaded_content, height=200)
-        if st.button("Lưu nội dung"):
-            with open(save_path, "w", encoding="utf-8") as f:
-                f.write(edited_sample)
-            st.success("Đã lưu nội dung thành công!")
+            sample_content = ""
+        st.session_state.sample_updated = False
 
-    if st.button("🔄 Cập nhật retriever"):
+    edited_sample = st.text_area("Chỉnh sửa sample.txt", value=sample_content, height=200)
+    if st.button("💾 Lưu sample.txt"):
+        res = requests.post("http://localhost:8000/api/files/sample", params={"content": edited_sample})
+        if res.status_code == 200:
+            st.success("✅ Đã lưu sample.txt")
+            st.session_state.sample_updated = True
+            st.rerun()
+
+    # ====== UPLOAD FILE =======
+    uploaded_file = st.file_uploader("📤 Tải lên tệp hỗ trợ (.txt, .pdf, .csv, .docx)", type=["txt", "pdf", "csv", "docx"])
+    if "uploaded_once" not in st.session_state:
+        st.session_state.uploaded_once = False
+
+    if uploaded_file and not st.session_state.uploaded_once:
+        files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+        res = requests.post("http://localhost:8000/api/files/upload", files=files)
+        if res.status_code == 200:
+            st.success(f"✅ {uploaded_file.name} đã được tải lên.")
+            st.session_state.need_reload_files = True
+            st.session_state.uploaded_once = True
+            st.rerun()
+
+    # ====== LẤY DANH SÁCH FILE KHI CẦN =======
+    if st.session_state.need_reload_files:
         try:
-            res = requests.post("http://localhost:8000/update_retriever")
+            res = requests.get("http://localhost:8000/api/files/list")
+            st.session_state.file_list = res.json().get("files", [])
+        except:
+            st.session_state.file_list = []
+        st.session_state.need_reload_files = False
+
+    st.subheader("📂 Danh sách tệp đã tải")
+    for file in st.session_state.file_list:
+        col1, col2 = st.columns([4, 1])
+        col1.markdown(f"- {file}")
+        if col2.button("❌ Xoá", key=f"del_{file}"):
+            res = requests.delete(f"http://localhost:8000/api/files/delete/{file}")
             if res.status_code == 200:
-                st.success("✅ Đã cập nhật chunk và retriever thành công!")
-            else:
-                st.error("❌ Lỗi khi cập nhật retriever.")
-        except Exception as e:
-            st.error(f"❌ Lỗi kết nối: {e}")
+                st.success(f"Đã xoá {file}")
+                st.session_state.need_reload_files = True
+                st.rerun()
+
+    # ====== CẬP NHẬT RETRIEVER =======
+    if st.button("🔄 Cập nhật retriever"):
+        res = requests.post("http://localhost:8000/api/files/update_retriever")
+        if res.status_code == 200:
+            st.success("✅ Đã cập nhật FAISS retriever!")
+        else:
+            st.error("❌ Lỗi khi cập nhật.")
+
+
+

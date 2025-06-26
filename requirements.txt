@@ -1,32 +1,36 @@
-# FastAPI và Server
+# Core backend
 fastapi
 uvicorn[standard]
 
-# Langchain + LLM + Embedding
+# MongoDB
+pymongo
+dnspython  # SSL Atlas
+
+# Langchain core + retriever
 langchain
 langchain-community
-langchain-openai
 langchain-together
 langchain-huggingface
 sentence-transformers
-transformers
 huggingface-hub
 faiss-cpu
-chromadb
 
-# MongoDB
-pymongo
-dnspython  # để kết nối với MongoDB Atlas có SSL
+# File loaders và NLP utils
+PyPDF2
+pypdf
+pdfminer.six
+python-docx
+python-multipart
+unstructured
+nltk
 
-# Web Interface
+# Streamlit UI
 streamlit
 requests
 httpx
 
-# Khác
+# Utils
 python-dotenv
 tiktoken
 pydantic
-nltk
 accelerate
-PyPDF2

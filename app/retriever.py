@@ -1,27 +1,49 @@
 from langchain_community.vectorstores import FAISS
-from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.document_loaders import (
+    TextLoader,
+    PDFMinerLoader,
+    UnstructuredWordDocumentLoader,
+    CSVLoader,
+)
 from pathlib import Path
 
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 BASE_PATH = Path("data/knowledge_base")
-FILES = ["sample.txt", "uploaded_content.txt"]
 
-def load_all_documents():
+
+
+def load_all_documents_from_folder(folder_path: Path):
     all_docs = []
-    for file in FILES:
-        file_path = BASE_PATH / file
-        if file_path.exists():
-            loader = TextLoader(str(file_path), encoding="utf-8")
+    for file_path in folder_path.glob("*"):
+        if not file_path.is_file():
+            continue
+
+        try:
+            if file_path.suffix == ".txt":
+                loader = TextLoader(str(file_path), encoding="utf-8")
+            elif file_path.suffix == ".pdf":
+                loader = PDFMinerLoader(str(file_path))
+            elif file_path.suffix == ".docx":
+                loader = UnstructuredWordDocumentLoader(str(file_path))
+            elif file_path.suffix == ".csv":
+                loader = CSVLoader(str(file_path),encoding="utf-8")
+            else:
+                continue  # Skip unsupported files
+
             docs = loader.load()
             all_docs.extend(docs)
+        except Exception as e:
+            print(f"❌ Error loading {file_path.name}: {e}")
+
     return all_docs
 
+
 def build_retriever(k: int = 3):
-    documents = load_all_documents()
-    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=20)
+    documents = load_all_documents_from_folder(BASE_PATH)
+    splitter = CharacterTextSplitter(chunk_size=300, chunk_overlap=30)
     docs = splitter.split_documents(documents)
     texts = [doc.page_content for doc in docs]
     metadatas = [doc.metadata for doc in docs]

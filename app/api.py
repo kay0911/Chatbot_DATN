@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Request
-from app.chatbot import generate_response, update_vectorstore
+from app.chatbot import generate_response
 from app.database import chat_history_collection
 import requests
 from app.config import FB_PAGE_ACCESS_TOKEN, FB_PAGE_ID
-import time
 
 router = APIRouter()
 
@@ -13,11 +12,6 @@ async def chat(request: Request):
     user_message = data.get("message")
     reply = generate_response(user_message)
     return {"reply": reply}
-
-@router.post("/update_retriever")
-async def update_retriever_api():
-    update_vectorstore()
-    return {"message": "Retriever updated successfully"}
 
 
 @router.get("/fb/messages")

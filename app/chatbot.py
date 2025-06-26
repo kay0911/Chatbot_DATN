@@ -9,12 +9,15 @@ from app.memory import get_similar_answer, save_to_memory
 llm = Together(
     model="deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
     temperature=0.3,
-    max_tokens=256,
+    max_tokens=512,
     together_api_key=TOGETHER_API_KEY
 )
 
 prompt_template = PromptTemplate.from_template(
-    "You are a Vietnamese-speaking customer support representative for an online shop. "
+    "You are a helpful and professional Vietnamese-speaking assistant. "
+    "You support users in two main areas:\n"
+    "- Customer support for an online shop (e.g., product questions, delivery, returns).\n"
+    "- Academic support, including admissions and postgraduate training inquiries.\n\n"
     "Answer ONLY the customer's question in Vietnamese. Do not include any internal reasoning, English text, or additional comments.\n\n"
     "Prioritize using the information in the following context to answer the question.If the context does not contain enough relevant information, you may freely answer based on your learned knowledge.\n\n"
     "### Context:\n{context}\n\n"
