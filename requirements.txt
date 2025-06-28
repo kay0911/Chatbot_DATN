@@ -14,6 +14,7 @@ langchain-huggingface
 sentence-transformers
 huggingface-hub
 faiss-cpu
+rank_bm25
 
 # File loaders và NLP utils
 PyPDF2

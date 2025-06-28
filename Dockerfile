@@ -15,11 +15,10 @@ RUN pip install --upgrade pip \
 # Copy thư mục và file chính
 COPY app/ app/
 COPY data/ data/
-COPY run.py .
 
 # Expose cổng
 EXPOSE 8000
 
 # Lệnh mặc định khi container chạy
-CMD ["python", "run.py"]
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
 

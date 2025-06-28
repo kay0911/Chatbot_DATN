@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from app.chatbot import generate_response
+from app.chatbot import generate_response_debug
 from app.database import chat_history_collection
 import requests
 from app.config import FB_PAGE_ACCESS_TOKEN, FB_PAGE_ID
@@ -10,7 +10,7 @@ router = APIRouter()
 async def chat(request: Request):
     data = await request.json()
     user_message = data.get("message")
-    reply = generate_response(user_message)
+    reply = generate_response_debug(user_message)
     return {"reply": reply}
 
 

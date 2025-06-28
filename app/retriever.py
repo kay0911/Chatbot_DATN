@@ -1,6 +1,7 @@
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.retrievers import EnsembleRetriever, BM25Retriever
 from langchain_community.document_loaders import (
     TextLoader,
     PDFMinerLoader,
@@ -12,7 +13,6 @@ from pathlib import Path
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 BASE_PATH = Path("data/knowledge_base")
-
 
 
 def load_all_documents_from_folder(folder_path: Path):
@@ -41,16 +41,29 @@ def load_all_documents_from_folder(folder_path: Path):
     return all_docs
 
 
-def build_retriever(k: int = 3):
+def build_retriever(k: int = 2):
     documents = load_all_documents_from_folder(BASE_PATH)
-    splitter = CharacterTextSplitter(chunk_size=300, chunk_overlap=30)
+    splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents(documents)
+
+    # Semantic Retriever (FAISS)
     texts = [doc.page_content for doc in docs]
     metadatas = [doc.metadata for doc in docs]
-    vectorstore = FAISS.from_texts(texts=texts, embedding=embedding, metadatas=metadatas)
-    return vectorstore.as_retriever(search_kwargs={"k": k})
+    faiss_vectorstore = FAISS.from_texts(texts=texts, embedding=embedding, metadatas=metadatas)
+    faiss_retriever = faiss_vectorstore.as_retriever(search_kwargs={"k": k})
 
-def get_retriever(k: int = 3):
+    # Keyword Retriever (BM25)
+    bm25_retriever = BM25Retriever.from_documents(docs)
+    bm25_retriever.k = k
+
+    # Combine both using EnsembleRetriever
+    ensemble = EnsembleRetriever(
+        retrievers=[faiss_retriever, bm25_retriever],
+    )
+    
+    return ensemble
+
+def get_retriever(k: int = 2):
     return build_retriever(k)
 
 

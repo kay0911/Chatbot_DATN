@@ -5,7 +5,7 @@ import requests
 
 st.set_page_config(page_title="Chatbot Shop", layout="wide")
 
-link_api = "https://chatbot-datn-e070.onrender.com"
+link_api = "http://localhost:8080"
 
 tab1, tab2, tab3 = st.tabs(["💬 Chat thử với Chatbot", "📨 Hộp thư Facebook", "📄 Quản lý dữ liệu huấn luyện"])
 
@@ -33,7 +33,7 @@ with tab1:
         st.session_state.chat_history.append(("user", user_input))
         with st.spinner("Đang trả lời..."):
             try:
-                res = requests.post(link_api + "/chat", json={"message": user_input})
+                res = requests.post(f"{link_api}/chat", json={"message": user_input})
                 reply = res.json().get("reply", "Không có phản hồi.")
             except Exception as e:
                 reply = f"Lỗi: {e}"
@@ -56,7 +56,7 @@ with tab2:
     # Gọi API chỉ khi cần
     if st.session_state.fb_reload:
         try:
-            res = requests.get(link_api + "/fb/messages")
+            res = requests.get(f"{link_api}/fb/messages")
             st.session_state.fb_messages = res.json()
             st.session_state.fb_reload = False
         except Exception as e:
@@ -98,7 +98,7 @@ with tab2:
                 reply = st.text_input("Nhập phản hồi", key=f"reply_{sender_id}")
                 if st.button("Gửi", key=f"btn_{sender_id}"):
                     try:
-                        send = requests.post(link_api + "/fb/reply", json={
+                        send = requests.post(f"{link_api}/fb/reply", json={
                             "sender_id": sender_id,
                             "message": reply
                         })
@@ -115,50 +115,66 @@ with tab2:
 with tab3:
     st.markdown("<h2 style='text-align: center;'>📂 Quản lý dữ liệu nội bộ</h2>", unsafe_allow_html=True)
 
-    # ====== KHỞI TẠO session_state =======
-    if "sample_updated" not in st.session_state:
-        st.session_state.sample_updated = True  # cho phép lấy dữ liệu lần đầu
-
     if "file_list" not in st.session_state:
         st.session_state.file_list = []
         st.session_state.need_reload_files = True
 
-    # ====== CHỈ LẤY sample.txt KHI CẦN =======
-    sample_content = ""
-    if st.session_state.sample_updated:
+    # ====== LẤY sample.txt =======
+    # ==== Xem & sửa sample.txt ====
+    st.subheader("📝 Nội dung sample.txt")
+
+    # Tạo biến trong session_state để lưu nội dung sample
+    if "sample_content" not in st.session_state:
+        st.session_state.sample_content = ""
+
+    # Nút để tải lại nội dung từ API
+    if st.button("📖 Xem lại nội dung sample.txt"):
         try:
-            res = requests.get(link_api + "/api/files/sample")
-            sample_content = res.json().get("content", "")
-        except:
-            sample_content = ""
-        st.session_state.sample_updated = False
+            res = requests.get(f"{link_api}/api/files/sample")
+            st.session_state.sample_content = res.json().get("content", "")
+            st.success("✅ Đã tải lại nội dung sample.txt")
+        except Exception as e:
+            st.error(f"❌ Không thể tải file: {e}")
 
-    edited_sample = st.text_area("Chỉnh sửa sample.txt", value=sample_content, height=200)
+    # Hiển thị và cho phép chỉnh sửa nội dung
+    edited_sample = st.text_area("Chỉnh sửa sample.txt", value=st.session_state.sample_content, height=200)
+
+    # Nút lưu nội dung đã chỉnh sửa
     if st.button("💾 Lưu sample.txt"):
-        res = requests.post(link_api + "/api/files/sample", params={"content": edited_sample})
-        if res.status_code == 200:
-            st.success("✅ Đã lưu sample.txt")
-            st.session_state.sample_updated = True
-            st.rerun()
+        try:
+            res = requests.post(f"{link_api}/api/files/sample", params={"content": edited_sample})
+            if res.status_code == 200:
+                st.success("✅ Đã lưu nội dung thành công!")
+                st.session_state.sample_content = edited_sample  # Cập nhật lại content sau khi lưu
+            else:
+                st.error("❌ Lỗi khi lưu file.")
+        except Exception as e:
+            st.error(f"❌ Lỗi kết nối: {e}")
 
-    # ====== UPLOAD FILE =======
-    uploaded_file = st.file_uploader("📤 Tải lên tệp hỗ trợ (.txt, .pdf, .csv, .docx)", type=["txt", "pdf", "csv", "docx"])
-    if "uploaded_once" not in st.session_state:
-        st.session_state.uploaded_once = False
+    # ====== TẢI FILE MỚI =======
+    uploaded_file = st.file_uploader(
+    "📤 Tải lên tệp hỗ trợ (.txt, .pdf, .csv, .docx)",
+    type=["txt", "pdf", "csv", "docx"],
+    key="upload_file"
+    )
 
-    if uploaded_file and not st.session_state.uploaded_once:
-        files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-        res = requests.post(link_api + "/api/files/upload", files=files)
-        if res.status_code == 200:
-            st.success(f"✅ {uploaded_file.name} đã được tải lên.")
-            st.session_state.need_reload_files = True
-            st.session_state.uploaded_once = True
-            st.rerun()
+    if uploaded_file is not None:
+        if "last_uploaded_filename" not in st.session_state or st.session_state.last_uploaded_filename != uploaded_file.name:
+            # Lần đầu upload hoặc là file mới
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+            res = requests.post(f"{link_api}/api/files/upload", files=files)
+            if res.status_code == 200:
+                st.success(f"✅ {uploaded_file.name} đã được tải lên.")
+                st.session_state.need_reload_files = True
+                st.session_state.last_uploaded_filename = uploaded_file.name  # Ghi nhớ file đã upload
+                st.rerun()
+        else:
+            st.info("📁 File đã được upload.")
 
-    # ====== LẤY DANH SÁCH FILE KHI CẦN =======
+    # ====== DANH SÁCH FILE =======
     if st.session_state.need_reload_files:
         try:
-            res = requests.get(link_api + "/api/files/list")
+            res = requests.get(f"{link_api}/api/files/list")
             st.session_state.file_list = res.json().get("files", [])
         except:
             st.session_state.file_list = []
@@ -169,7 +185,7 @@ with tab3:
         col1, col2 = st.columns([4, 1])
         col1.markdown(f"- {file}")
         if col2.button("❌ Xoá", key=f"del_{file}"):
-            res = requests.delete(link_api + f"/api/files/delete/{file}")
+            res = requests.delete(f"{link_api}/api/files/delete/{file}")
             if res.status_code == 200:
                 st.success(f"Đã xoá {file}")
                 st.session_state.need_reload_files = True
@@ -177,11 +193,12 @@ with tab3:
 
     # ====== CẬP NHẬT RETRIEVER =======
     if st.button("🔄 Cập nhật retriever"):
-        res = requests.post(link_api + "/api/files/update_retriever")
+        res = requests.post(f"{link_api}/api/files/update_retriever")
         if res.status_code == 200:
-            st.success("✅ Đã cập nhật FAISS retriever!")
+            st.success("✅ Đã cập nhật retriever!")
         else:
             st.error("❌ Lỗi khi cập nhật.")
+
 
 
 
