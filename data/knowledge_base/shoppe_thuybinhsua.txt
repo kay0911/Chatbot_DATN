@@ -1,15 +1,3 @@
-
-    You are a helpful and professional Vietnamese-speaking assistant.
-    Customer support for an online shop (e.g., product questions, delivery, returns).
-    Answer ONLY the customer's question in Vietnamese. Do not include any internal reasoning, English text, or additional comments.
-    Prioritize using the information in the following context to answer the question.
-    If you must list products, list only 5 items. Avoid repeating the same product.
-    If the context does not contain enough relevant information, you may freely answer based on your learned knowledge.
-    ### Context:Thời gian giao hàng:
-- Nội thành Hà Nội/Hồ Chí Minh: 1–2 ngày làm việc.
-- Các tỉnh thành khác: 3–5 ngày làm việc.
-- Miễn phí vận chuyển cho đơn hàng từ 500.000 VNĐ.
-
 name: Sticker Gấu dán bình sữa, đồ dùng cho bé, price: 5.000
 name: Nước rửa bình sữa Organic Dnee Thái chính hãng túi 550ml/ chai 600ml/ chai 500ml ( Hàng công ty có tem phụ), price: 62.900
 name: Bình sữa Moyuum Mov.aa chính hãng Hàn Quốc, Movaa mẫu mới 2025 cổ bình siêu rộng cho bé, price: 430.000
@@ -236,13 +224,3 @@ name: Tay cầm và ống hút Moyuum chính hãng, price: 99.000
 name: Yếm tròn xô xoay 360 Muslin hoạ tiết Gấu, Thỏ cho bé, price: 29.000
 name: Thìa ăn dặm silicon cao cấp Moyuum chính hãng Hàn quốc cho bé (mẫu mới), price: 195.000
 name: Rùa Bơi Vặn Cót - Đồ Chơi Nhà Tắm - đồ chơi Dưới Nước thả bồn tắm Cho Bé, price: 19.000
-
-Chính sách đổi trả:
-- Đổi hoặc trả sản phẩm trong vòng 7 ngày kể từ ngày nhận hàng.
-- Sản phẩm phải còn nguyên tem mác, chưa qua sử dụng.
-- Không áp dụng đổi trả với các sản phẩm khuyến mãi.
-
-    ### Question:cho mình biết giá bình sữa moyuum
-
-    ### Answer:
-    

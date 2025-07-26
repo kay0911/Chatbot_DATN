@@ -16,9 +16,10 @@ llm = Together(
 prompt_template = PromptTemplate.from_template(
     """
     You are a helpful and professional Vietnamese-speaking assistant.
-    Academic support, including admissions and postgraduate training inquiries. 
+    Customer support for an online shop (e.g., product questions, delivery, returns).
     Answer ONLY the customer's question in Vietnamese. Do not include any internal reasoning, English text, or additional comments.
     Prioritize using the information in the following context to answer the question.
+    If you must list products, list only 5 items. Avoid repeating the same product.
     If the context does not contain enough relevant information, you may freely answer based on your learned knowledge.
     ### Context:{context}
 
@@ -29,7 +30,7 @@ prompt_template = PromptTemplate.from_template(
 )
 
 
-retriever = get_retriever(3)
+retriever = get_retriever()
 
 def build_qa_chain(retriever):
     return RetrievalQA.from_chain_type(
@@ -42,7 +43,7 @@ def build_qa_chain(retriever):
 qa_chain = build_qa_chain(retriever)
 def update_vectorstore():
     global retriever, qa_chain
-    retriever = get_retriever(3)
+    retriever = get_retriever()
     qa_chain = build_qa_chain(retriever)
     return retriever
 
@@ -51,10 +52,10 @@ def get_prompt_text(question: str, context_docs: list[str]) -> str:
     return prompt_template.format(context=context, question=question)
 
 def generate_response_debug(user_input: str) -> str:
-    """cached_answer = get_similar_answer(user_input)
+    cached_answer = get_similar_answer(user_input)
     if cached_answer:
         return cached_answer
-    """
+    
     # Lấy ngữ cảnh từ retriever
     docs = retriever.invoke(user_input)
     context_list = [doc.page_content for doc in docs]
@@ -75,7 +76,7 @@ def generate_response_debug(user_input: str) -> str:
     for stop_token in ["</think>", "###", "Khách hàng hỏi:", "Customer question:"]:
         if stop_token in result:
             result = result.split(stop_token)[0].strip()
-    """
+    
     save_to_memory(user_input, result)
-    """
+    
     return result

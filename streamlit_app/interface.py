@@ -5,7 +5,7 @@ import requests
 
 st.set_page_config(page_title="Chatbot Shop", layout="wide")
 
-link_api = "http://localhost:8080"
+link_api = "http://localhost:8000"
 
 tab1, tab2, tab3 = st.tabs(["💬 Chat thử với Chatbot", "📨 Hộp thư Facebook", "📄 Quản lý dữ liệu huấn luyện"])
 

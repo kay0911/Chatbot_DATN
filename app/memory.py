@@ -1,9 +1,9 @@
-from app.database import db
+from app.database import data_collection
 from langchain_huggingface import HuggingFaceEmbeddings
 import numpy as np
 
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-collection = db["memory"]
+collection = data_collection
 
 def get_similar_answer(query: str, threshold: float = 0.95):
     query_embedding = embedding_model.embed_query(query)

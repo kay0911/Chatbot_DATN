@@ -1,7 +1,8 @@
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.retrievers import EnsembleRetriever, BM25Retriever
+from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from langchain_community.document_loaders import (
     TextLoader,
     PDFMinerLoader,
@@ -43,7 +44,7 @@ def load_all_documents_from_folder(folder_path: Path):
 
 def build_retriever(k: int = 2):
     documents = load_all_documents_from_folder(BASE_PATH)
-    splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    splitter = CharacterTextSplitter(chunk_size=200, chunk_overlap=20)
     docs = splitter.split_documents(documents)
 
     # Semantic Retriever (FAISS)
